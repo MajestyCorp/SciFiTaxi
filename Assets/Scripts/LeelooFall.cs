@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Scifi.Tools;
 
 namespace Scifi
 {
@@ -32,7 +33,7 @@ namespace Scifi
         [SerializeField]
         private float hitForceValue = 3f;
 
-        private Timer _timer = new Timer();
+        private Timer _countdownTimer = new Timer();
 
         private void OnEnable()
         {
@@ -45,8 +46,8 @@ namespace Scifi
 
         private void LateUpdate()
         {
-            if (_timer.IsActive)
-                UpdateLeelooPosition(_timer.Progress);
+            if (_countdownTimer.IsActive)
+                UpdateLeelooPosition(_countdownTimer.Progress);
             else if (leeloo.gameObject.activeSelf)
                 //we are in car - activate effect
                 ActivateHostile();
@@ -56,8 +57,8 @@ namespace Scifi
         {
             yield return new WaitForSeconds(Random.Range(minAppearDelay, maxAppearDelay));
 
-            _timer.Activate(fallTime);
-            UpdateLeelooPosition(_timer.Progress);
+            _countdownTimer.Activate(fallTime);
+            UpdateLeelooPosition(_countdownTimer.Progress);
             leeloo.gameObject.SetActive(true);
         }
 

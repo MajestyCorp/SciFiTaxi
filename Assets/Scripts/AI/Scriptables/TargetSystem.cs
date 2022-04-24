@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Scifi.Generators;
 
-namespace Scifi
+namespace Scifi.AI
 {
     [CreateAssetMenu(fileName = "Target System", menuName = "Movement AI/Target System")]
     public class TargetSystem : MovementSO

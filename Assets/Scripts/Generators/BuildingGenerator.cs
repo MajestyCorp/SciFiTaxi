@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Scifi.Tools;
 
-namespace Scifi
+namespace Scifi.Generators
 {
     public class BuildingGenerator : MonoBehaviour, IInitializer
     {
@@ -28,7 +29,7 @@ namespace Scifi
         //we make pool of each building item
         //list of all items (bottom + middle + top) for fast pooling
         private List<Transform> _indexItems = null;
-        private List<Pooler> _poolerItems = null;
+        private List<Pooler<Transform>> _poolerItems = null;
 
         private System.Random _random = new System.Random();
 
@@ -55,13 +56,13 @@ namespace Scifi
                 _indexItems.Add(topItems[i]);
 
             //now init all pooling objects
-            _poolerItems = new List<Pooler>();
+            _poolerItems = new List<Pooler<Transform>>();
             for (int i = 0; i < bottomItems.Count; i++)
-                _poolerItems.Add(new Pooler(bottomItems[i]));
+                _poolerItems.Add(new Pooler<Transform>(bottomItems[i]));
             for (int i = 0; i < middleItems.Count; i++)
-                _poolerItems.Add(new Pooler(middleItems[i]));
+                _poolerItems.Add(new Pooler<Transform>(middleItems[i]));
             for (int i = 0; i < topItems.Count; i++)
-                _poolerItems.Add(new Pooler(topItems[i]));
+                _poolerItems.Add(new Pooler<Transform>(topItems[i]));
         }
         #endregion
 
@@ -70,10 +71,7 @@ namespace Scifi
             _random = new System.Random(seed);
         }
 
-        /// <summary>
-        /// use this method for building generation
-        /// </summary>
-        private GameObject GetPooledByItem(Transform buildingItem)
+        private Transform GetPooledByItem(Transform buildingItem)
         {
             int index;
             index = _indexItems.IndexOf(buildingItem);
@@ -81,7 +79,7 @@ namespace Scifi
             if(index<0)
             {
                 _indexItems.Add(buildingItem);
-                _poolerItems.Add(new Pooler(buildingItem));
+                _poolerItems.Add(new Pooler<Transform>(buildingItem));
                 index = _indexItems.Count - 1;
             }
 
@@ -90,7 +88,7 @@ namespace Scifi
 
         public void DisableBuilding(Transform item)
         {
-            //recursivelly detach and disable all childs except JOINT
+            //recursivelly detach and disable all childs except JOINT objects
             Transform child;
 
             //make loop from end to start, because we are removing childs one by one
@@ -105,6 +103,10 @@ namespace Scifi
             item.gameObject.SetActive(false);
         }
 
+        /// <summary>
+        /// Generates new random building
+        /// </summary>
+        /// <returns>Building transform</returns>
         public Transform Generate()
         {
             int floors = _random.Next(minFloors, maxFloors + 1);
@@ -139,7 +141,7 @@ namespace Scifi
         private Transform CreateFloor(Transform upperFloor, List<Transform> listItems)
         {
             //select random prefab from list and get pooled item
-            Transform floor = GetPooledByItem(listItems[_random.Next(0, listItems.Count)]).transform;
+            Transform floor = GetPooledByItem(listItems[_random.Next(0, listItems.Count)]);
             Transform child;
 
             //make random rotation 0/90/180/270
@@ -177,7 +179,7 @@ namespace Scifi
         {
             if (_poolerItems != null)
                 for (int i = 0; i < _poolerItems.Count; i++)
-                    _poolerItems[i].OnDestroy();
+                    _poolerItems[i].Clear();
         }
     }
 }

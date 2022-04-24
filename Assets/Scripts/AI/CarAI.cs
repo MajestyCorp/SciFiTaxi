@@ -1,21 +1,22 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Scifi.Generators;
 
-namespace Scifi
+namespace Scifi.AI
 {
     enum ETargetRotation { Target, MoveVector, VelocityVector};
-
-    [System.Serializable]
-    public class CarSystem
-    {
-        public MovementSO system;
-        public float multiplier;
-    }
 
     [RequireComponent(typeof(Rigidbody))]
     public class CarAI : MonoBehaviour
     {
+        [System.Serializable]
+        public class CarSystem
+        {
+            public MovementSO system;
+            public float multiplier;
+        }
+
         [Header("Debug")]
         [SerializeField]
         private bool drawGizmo = false;
@@ -43,7 +44,7 @@ namespace Scifi
         public void DisableCar()
         {
             gameObject.SetActive(false);
-            TransportManager.Instance.RespawnCar(transform);
+            TrafficGenerator.Instance.RespawnCar(transform);
         }
 
         private void Awake()

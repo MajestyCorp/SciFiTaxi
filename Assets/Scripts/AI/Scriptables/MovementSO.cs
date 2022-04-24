@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Scifi
+namespace Scifi.AI
 {
     public class MovementSO : ScriptableObject
     {

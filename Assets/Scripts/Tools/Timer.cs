@@ -2,26 +2,26 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Scifi
+namespace Scifi.Tools
 {
     public class Timer
     {
-        public bool IsActive { get { return Time.time < timeEnd; } }
-        public bool IsFinished { get { return Time.time >= timeEnd; } }
+        public bool IsActive { get { return Time.time < _timeEnd; } }
+        public bool IsFinished { get { return Time.time >= _timeEnd; } }
         public float Progress { get { return CalcProgress(); } }
-        private float timeEnd = 0f, timeStart = 0f;
 
+        private float _timeEnd = 0f, _timeStart = 0f;
 
         public void Activate(float timeAmount)
         {
-            timeStart = Time.time;
-            timeEnd = timeStart + timeAmount;
+            _timeStart = Time.time;
+            _timeEnd = _timeStart + timeAmount;
         }
 
         public void Activate(float timeAmount, float progress = 0f)
         {
-            timeStart = Time.time - timeAmount * progress;
-            timeEnd = timeStart + timeAmount;
+            _timeStart = Time.time - timeAmount * progress;
+            _timeEnd = _timeStart + timeAmount;
         }
 
         private float CalcProgress()
@@ -29,7 +29,7 @@ namespace Scifi
             if (IsFinished)
                 return 1f;
             else
-                return (Time.time - timeStart) / (timeEnd - timeStart);
+                return (Time.time - _timeStart) / (_timeEnd - _timeStart);
         }
     }
 }

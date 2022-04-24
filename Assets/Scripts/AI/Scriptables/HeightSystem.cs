@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Scifi
+namespace Scifi.AI
 {
     [CreateAssetMenu(fileName = "Height System", menuName = "Movement AI/Height System")]
     public class HeightSystem : MovementSO
@@ -14,7 +14,7 @@ namespace Scifi
 
         private float _height;
         private Transform _carTransform;
-        private Vector3 v;
+        private Vector3 _newPosition;
 
         public override void Initialize(CarAI carAI)
         {
@@ -27,10 +27,10 @@ namespace Scifi
         public override Vector3 CalcMoveVector()
         {
             //calc current height
-            v = _carTransform.position;
-            v.y = _height;
+            _newPosition = _carTransform.position;
+            _newPosition.y = _height;
 
-            return (v - _carTransform.position).normalized;
+            return (_newPosition - _carTransform.position).normalized;
         }
     }
 }

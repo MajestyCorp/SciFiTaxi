@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Scifi.Tools;
 
-namespace Scifi
+namespace Scifi.AI
 {
     [CreateAssetMenu(fileName = "Police System", menuName = "Movement AI/Police System")]
     public class PoliceNavigation : TargetSystem

@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Scifi.Tools;
 
-namespace Scifi
+namespace Scifi.AI
 {
     [CreateAssetMenu(fileName = "Avoid Obstacles System", menuName = "Movement AI/Avoid Obstacles")]
     public class AvoidObstaclesSystem : MovementSO

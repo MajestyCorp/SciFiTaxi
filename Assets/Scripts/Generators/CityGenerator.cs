@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Scifi.Tools;
 
-namespace Scifi
+namespace Scifi.Generators
 {
     public class CityGenerator : MonoBehaviour, IInitializer
     {
@@ -29,11 +30,11 @@ namespace Scifi
         [SerializeField, Tooltip("Randomize house position")]
         private float randomHouseRadius = 0.5f;
 
-        private Pooler chunksPool = null;
+        private Pooler<Transform> _chunksPool = null;
         private System.Random _random;
 
-        private List<Chunk> chunks = new List<Chunk>();
-        private Transform corChunk = null;//chunk which is used in CreateChunkDelayed
+        private List<Chunk> _chunks = new List<Chunk>();
+        private Transform _cachedChunk = null;//chunk which is used in CreateChunkDelayed
 
         public class Chunk
         {
@@ -73,7 +74,7 @@ namespace Scifi
 
         private void InitPooling()
         {
-            chunksPool = new Pooler(chunkTemplate, 5);
+            _chunksPool = new Pooler<Transform>(chunkTemplate, 5);
         }
         #endregion
 
@@ -92,17 +93,17 @@ namespace Scifi
                     if(i*i + j*j <= sqrRadius)
                     {
                         seed = (i % 100) * 100 + j % 100;// + cSeed;
-                        chunks.Add(new Chunk(i, j, CreateChunk(seed), chunkWidth));
+                        _chunks.Add(new Chunk(i, j, CreateChunk(seed), chunkWidth));
                     }
                 }
         }
 
         private void ClearChunks()
         {
-            for (int i = 0; i < chunks.Count; i++)
-                DisableChunk(chunks[i].Object);
+            for (int i = 0; i < _chunks.Count; i++)
+                DisableChunk(_chunks[i].Object);
 
-            chunks.Clear();
+            _chunks.Clear();
 
         }
         #endregion
@@ -160,11 +161,11 @@ namespace Scifi
             //check all chunks, add new and remove old
 
             //first, remove old chunks to decrease total list
-            for (int i = chunks.Count - 1; i >= 0; i--)
-                if (chunks[i].GetSqrDist(newX, newY) > sqrRadius)
+            for (int i = _chunks.Count - 1; i >= 0; i--)
+                if (_chunks[i].GetSqrDist(newX, newY) > sqrRadius)
                 {
-                    DisableChunk(chunks[i].Object);
-                    chunks.RemoveAt(i);
+                    DisableChunk(_chunks[i].Object);
+                    _chunks.RemoveAt(i);
 
                     //make small delay after each action
                     yield return null;
@@ -184,7 +185,7 @@ namespace Scifi
                         //result chunk will be placed in corChunk, because no out params can be used
                         yield return StartCoroutine(CreateChunkDelayed(newX + i, newY + j, seed));
 
-                        chunks.Add(new Chunk(newX + i, newY + j, corChunk, chunkWidth));
+                        _chunks.Add(new Chunk(newX + i, newY + j, _cachedChunk, chunkWidth));
                     } 
                 }
         }
@@ -195,17 +196,17 @@ namespace Scifi
 
             _random = new System.Random(seed);
 
-            corChunk = chunksPool.GetPooledObject().transform;
+            _cachedChunk = _chunksPool.GetPooledObject();
             //set chunk position here because we do delayed creation
             //otherwise this chunk will blink and will be visible in wrong position
-            corChunk.localPosition = new Vector3(x * chunkWidth, 0f, y * chunkWidth);
-            corChunk.gameObject.SetActive(true);
+            _cachedChunk.localPosition = new Vector3(x * chunkWidth, 0f, y * chunkWidth);
+            _cachedChunk.gameObject.SetActive(true);
             BuildingGenerator.Instance.SetSeed(seed);
             yield return null;
 
-            for (int i = 0; i < corChunk.childCount; i++)
+            for (int i = 0; i < _cachedChunk.childCount; i++)
             {
-                child = corChunk.GetChild(i);
+                child = _cachedChunk.GetChild(i);
                 if (child.name.CompareTo(c_spot) == 0)
                 {
                     house = BuildingGenerator.Instance.Generate();
@@ -220,15 +221,15 @@ namespace Scifi
 
         private bool ChunkExist(int x, int y)
         {
-            for (int i = 0; i < chunks.Count; i++)
-                if (chunks[i].IsSameCoords(x, y))
+            for (int i = 0; i < _chunks.Count; i++)
+                if (_chunks[i].IsSameCoords(x, y))
                     return true;
             return false;
         }
 
         private Transform CreateChunk(int seed)
         {
-            Transform chunk = chunksPool.GetPooledObject().transform;
+            Transform chunk = _chunksPool.GetPooledObject();
             Transform child, house;
 
             _random = new System.Random(seed);

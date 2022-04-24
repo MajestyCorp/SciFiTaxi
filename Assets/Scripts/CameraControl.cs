@@ -30,20 +30,20 @@ namespace Scifi
         [SerializeField, Tooltip("how fast camera moves to desired position")]
         private float dampening = 10f;
 
-        private float angleX, angleY;
-        private Quaternion desiredRotation;
-        private Transform carTransform;
+        private float _angleX, _angleY;
+        private Quaternion _desiredRotation;
+        private Transform _car;
 
         private void Start()
         {
             //initialize start angles
             Vector3 angles;
             angles = carCamera.eulerAngles;
-            angleX = angles.x;
-            angleY = angles.y;
-            desiredRotation = carCamera.rotation;
+            _angleX = angles.x;
+            _angleY = angles.y;
+            _desiredRotation = carCamera.rotation;
 
-            carTransform = carTarget.transform;
+            _car = carTarget.transform;
         }
 
         private void LateUpdate()
@@ -66,7 +66,7 @@ namespace Scifi
             angles = carCamera.eulerAngles;
             vCamera = Quaternion.Euler(0f, angles.y, 0f) * Vector3.forward;
 
-            angles = carTransform.eulerAngles;
+            angles = _car.eulerAngles;
             vCar = Quaternion.Euler(0f, angles.y, 0f) * Vector3.forward;
 
             carTarget.TurnRate = Vector3.SignedAngle(vCar, vCamera, Vector3.up) * turnStrength;
@@ -85,21 +85,21 @@ namespace Scifi
 
         private void HandleRotation()
         {
-            angleX -= Input.GetAxis("Mouse Y") * sensitivity;
-            angleY += Input.GetAxis("Mouse X") * sensitivity;
+            _angleX -= Input.GetAxis("Mouse Y") * sensitivity;
+            _angleY += Input.GetAxis("Mouse X") * sensitivity;
 
-            angleX = Mathf.Clamp(angleX, -80f, 80f);
+            _angleX = Mathf.Clamp(_angleX, -80f, 80f);
 
-            desiredRotation = Quaternion.Euler(angleX, angleY, 0);
+            _desiredRotation = Quaternion.Euler(_angleX, _angleY, 0);
         }
 
         private void MoveToDesiredPos()
         {
             //smoothly move camera to desired rotation
-            carCamera.rotation = Quaternion.Lerp(carCamera.rotation, desiredRotation, Time.deltaTime * dampening);
+            carCamera.rotation = Quaternion.Lerp(carCamera.rotation, _desiredRotation, Time.deltaTime * dampening);
 
             //update camera local position
-            carCamera.position = carTransform.position + Vector3.up * camHeight - carCamera.forward * camDistance;
+            carCamera.position = _car.position + Vector3.up * camHeight - carCamera.forward * camDistance;
         }
     }
 }
