@@ -8,6 +8,8 @@ namespace Scifi.AI
     [CreateAssetMenu(fileName = "Police System", menuName = "Movement AI/Police System")]
     public class PoliceNavigation : TargetSystem
     {
+        protected Vector3 LeeloDirection { get { return _leeloo.position - _carTransform.position; } }
+
         [Header("Catch mode settings")]
         [SerializeField]
         private LayerMask hostileMask;
@@ -58,7 +60,7 @@ namespace Scifi.AI
             }
             else
             {
-                result = (_leeloo.position - _carTransform.position).normalized;
+                result = LeeloDirection.normalized;
 
                 //calc acceleration as a DOT value between forward and target direction
                 //with it police will fly faster on straight path
@@ -84,7 +86,7 @@ namespace Scifi.AI
             //check vision angle between police forward and hostile position
             _leeloo = _hostileArray[0].transform;
 
-            if (Vector3.Angle(_carTransform.forward, (_leeloo.position - _carTransform.position).normalized) > maxHostileAngle)
+            if (Vector3.Angle(_carTransform.forward, LeeloDirection.normalized) > maxHostileAngle)
                 //out of range, clear target
                 _leeloo = null;
 
@@ -94,7 +96,7 @@ namespace Scifi.AI
         private void CheckTarget()
         {
             //if leeloo is too far then we lost it
-            if ((_leeloo.position - _carTransform.position).sqrMagnitude > _sqrDist)
+            if (LeeloDirection.sqrMagnitude > _sqrDist)
             {
                 _leeloo = null;
                 ValueFactor = 1f;//reset acceleration to 1

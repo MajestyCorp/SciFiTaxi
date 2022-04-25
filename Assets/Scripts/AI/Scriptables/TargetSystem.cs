@@ -160,9 +160,7 @@ namespace Scifi.AI
             {
                 if (index == 0)
                 {
-                    //save position as vector
                     _targetPosition = colliders[i].transform.position;
-                    //_targetPosition.y = _carTransform.position.y;
                     return colliders[i].transform;
                 }
                 else if (colliders[i].transform != curTarget && colliders[i].transform != prevTarget)
@@ -172,9 +170,7 @@ namespace Scifi.AI
             }
 
             //by default return prev target
-            //save position as vector
             _targetPosition = prevTarget.position;
-            //_targetPosition.y = _carTransform.position.y;
             return prevTarget;
         }
     }

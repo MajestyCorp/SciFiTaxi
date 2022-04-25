@@ -16,7 +16,7 @@ namespace Scifi.AI
         [SerializeField]
         private float checkDelay = 0.2f;
 
-        private Timer _timer;
+        private Timer _checkTimer;
         private Collider[] _obstaclesArray;
         private CarAI _carAI;
         private Transform _carTransform;
@@ -25,7 +25,7 @@ namespace Scifi.AI
         public override void InitSO(CarAI carAI)
         {
             base.InitSO(carAI);
-            _timer = new Timer();
+            _checkTimer = new Timer();
             _rb = carAI.GetComponent<Rigidbody>();
         }
 
@@ -35,13 +35,13 @@ namespace Scifi.AI
             _carAI = carAI;
             _carTransform = _carAI.transform;
             _obstaclesArray = null;
-            _timer.Activate(Random.value * checkDelay);
+            _checkTimer.Activate(Random.value * checkDelay);
         }
 
         public override Vector3 CalcMoveVector()
         {
             //calculate avoidance vector
-            if(_timer.IsFinished)
+            if(_checkTimer.IsFinished)
             {
                 OverlapCollisions();
             }
@@ -49,11 +49,10 @@ namespace Scifi.AI
             return CalcAvoidance();
         }
 
-        /// <summary>
-        /// calculate soft avoidance, closer objects affects more than far objects
-        /// </summary>
         private Vector3 CalcAvoidance()
         {
+            //calculate soft avoidance, closer objects affects more than far objects
+
             Vector3 avoidance = Vector3.zero;
             Vector3 v;
             float f;
@@ -67,19 +66,15 @@ namespace Scifi.AI
                     v = _carTransform.position - _obstaclesArray[i].transform.position;
                     f = v.sqrMagnitude;
                     if(f>0.01f)
-                        avoidance += v / v.sqrMagnitude; //v.normalized * (_sqrDist - v.sqrMagnitude) / _sqrDist;
+                        avoidance += v / v.sqrMagnitude;
                 }
-
-            //avoidance /= _obstaclesArray.Length;
-
-            Debug.DrawRay(_carTransform.position, avoidance.normalized * 5f, Color.blue);
 
             return avoidance.normalized;
         }
 
         private void OverlapCollisions()
         {
-            _timer.Activate(checkDelay);
+            _checkTimer.Activate(checkDelay);
             _obstaclesArray = Physics.OverlapSphere(_carTransform.position, avoidRadius, obstaclesMask);
         }
     }

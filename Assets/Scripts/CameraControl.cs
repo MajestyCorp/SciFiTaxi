@@ -62,7 +62,7 @@ namespace Scifi
 
             //how to calc Car.TurnRate
             //calculate signed angle between two "forward" vectors from top down view
-            //camera and car
+            //forward camera vector and forward car vector
             angles = carCamera.eulerAngles;
             vCamera = Quaternion.Euler(0f, angles.y, 0f) * Vector3.forward;
 

@@ -18,7 +18,7 @@ namespace Scifi.Generators
         private Transform trackedObject;
 
         [SerializeField]
-        private Transform chunkTemplate;
+        private Chunk chunkTemplate;
 
         [SerializeField]
         private float chunkWidth = 6f;
@@ -26,31 +26,10 @@ namespace Scifi.Generators
         [SerializeField, Tooltip("Generation chunk radius")]
         private int generationRadius = 3;
 
-        [SerializeField, Tooltip("Randomize house position")]
-        private float randomHouseRadius = 0.5f;
+        private Pooler<Chunk> _chunksPool = null;
 
-        private Pooler<Transform> _chunksPool = null;
-        private System.Random _random;
-
+        //list of active chunks
         private List<Chunk> _chunks = new List<Chunk>();
-        private Transform _cachedChunk = null;//chunk which is used in CreateChunkDelayed
-
-        public class Chunk
-        {
-            public Vector2Int Position { get; private set; }
-            public Transform Object { get; private set; }
-            public Chunk(Vector2Int position, Transform chunk, float chunkWidth)
-            {
-                Object = chunk;
-                Position = position;
-                chunk.localPosition = new Vector3(position.x * chunkWidth, 0f, position.y * chunkWidth);
-            }
-
-            public int GetSqrDist(Vector2Int fromPosition)
-            {
-                return (Position - fromPosition).sqrMagnitude;
-            }
-        }
 
         #region initialize stuff
         public void InitInstance()
@@ -66,7 +45,8 @@ namespace Scifi.Generators
 
         private void InitPooling()
         {
-            _chunksPool = new Pooler<Transform>(chunkTemplate, 5);
+            chunkTemplate.InitPrefab();
+            _chunksPool = new Pooler<Chunk>(chunkTemplate, 5);
         }
         #endregion
 
@@ -74,7 +54,7 @@ namespace Scifi.Generators
         private void InitCity()
         {
             int sqrRadius = generationRadius * generationRadius;
-            int seed;
+            Chunk chunk;
             Vector2Int coords = Vector2Int.zero;
 
             ClearChunks();
@@ -84,8 +64,10 @@ namespace Scifi.Generators
                 {
                     if(coords.sqrMagnitude <= sqrRadius)
                     {
-                        seed = (coords.x % 100) * 100 + coords.y % 100;// + cSeed;
-                        _chunks.Add(new Chunk(coords, CreateChunk(seed), chunkWidth));
+                        chunk = _chunksPool.GetPooledObject();
+                        chunk.InitInstance(GetSeed(coords), coords, chunkWidth);
+                        chunk.InitBuildings();
+                        _chunks.Add(chunk);
                     }
                 }
         }
@@ -93,10 +75,14 @@ namespace Scifi.Generators
         private void ClearChunks()
         {
             for (int i = 0; i < _chunks.Count; i++)
-                DisableChunk(_chunks[i].Object);
+                _chunks[i].Disable();
 
             _chunks.Clear();
+        }
 
+        private int GetSeed(Vector2Int coords)
+        {
+            return (coords.x % 100) * 100 + coords.y % 100;
         }
         #endregion
 
@@ -132,7 +118,6 @@ namespace Scifi.Generators
                 if (newPos != CenterPosition)
                 {
                     yield return StartCoroutine(TrackerUpdate(newPos));
-
                     CenterPosition = newPos;
                 }
                 else
@@ -145,7 +130,7 @@ namespace Scifi.Generators
         private IEnumerator TrackerUpdate(Vector2Int newCenter)
         {
             int sqrRadius = generationRadius * generationRadius;
-            int seed;
+            Chunk chunk;
             Vector2Int coords = Vector2Int.zero;
             Vector2Int globalCoords;
 
@@ -155,7 +140,7 @@ namespace Scifi.Generators
             for (int i = _chunks.Count - 1; i >= 0; i--)
                 if (_chunks[i].GetSqrDist(newCenter) > sqrRadius)
                 {
-                    DisableChunk(_chunks[i].Object);
+                    _chunks[i].Disable();
                     _chunks.RemoveAt(i);
 
                     //make small delay after each action
@@ -169,46 +154,18 @@ namespace Scifi.Generators
                     globalCoords = newCenter + coords;
                     if (coords.sqrMagnitude <= sqrRadius && !ChunkExist(globalCoords))
                     {
-                        seed = ((globalCoords.x) % 100) * 100 + (globalCoords.y) % 100;
+                        chunk = _chunksPool.GetPooledObject();
+                        chunk.InitInstance(GetSeed(globalCoords), globalCoords, chunkWidth);
 
                         //do not create whole chunk at once
                         //instead make small delays between creating each building
                         //so final results wont have lags when big chunk is created
                         //result chunk will be placed in corChunk, because no out params can be used
-                        yield return StartCoroutine(CreateChunkDelayed(globalCoords, seed));
+                        yield return StartCoroutine(chunk.InitBuildingsDelayed());
 
-                        _chunks.Add(new Chunk(globalCoords, _cachedChunk, chunkWidth));
+                        _chunks.Add(chunk);
                     } 
                 }
-        }
-
-        private IEnumerator CreateChunkDelayed(Vector2Int globalCoords, int seed)
-        {
-            Transform child, house;
-
-            _random = new System.Random(seed);
-
-            _cachedChunk = _chunksPool.GetPooledObject();
-            //set chunk position here because we do delayed creation
-            //otherwise this chunk will blink and will be visible in wrong position
-            _cachedChunk.localPosition = new Vector3(globalCoords.x * chunkWidth, 0f, globalCoords.y * chunkWidth);
-            _cachedChunk.gameObject.SetActive(true);
-            BuildingGenerator.Instance.SetSeed(seed);
-            yield return null;
-
-            for (int i = 0; i < _cachedChunk.childCount; i++)
-            {
-                child = _cachedChunk.GetChild(i);
-                if (child.name.CompareTo(c_spot) == 0)
-                {
-                    house = BuildingGenerator.Instance.Generate();
-                    house.parent = child;
-                    house.localPosition = new Vector3(((float)_random.NextDouble() - 0.5f) * randomHouseRadius,
-                                                      0f,
-                                                      ((float)_random.NextDouble() - 0.5f) * randomHouseRadius);
-                    yield return null;
-                }
-            }
         }
 
         private bool ChunkExist(Vector2Int coords)
@@ -219,58 +176,10 @@ namespace Scifi.Generators
             return false;
         }
 
-        private Transform CreateChunk(int seed)
-        {
-            Transform chunk = _chunksPool.GetPooledObject();
-            Transform child, house;
-
-            _random = new System.Random(seed);
-
-            chunk.gameObject.SetActive(true);
-            BuildingGenerator.Instance.SetSeed(seed);
-
-            for(int i=0;i<chunk.childCount;i++)
-            {
-                child = chunk.GetChild(i);
-                if(child.name.CompareTo(c_spot)==0)
-                {
-                    house = BuildingGenerator.Instance.Generate();
-                    house.parent = child;
-                    house.localPosition = new Vector3(((float)_random.NextDouble() - 0.5f) * randomHouseRadius,
-                                                      0f,
-                                                      ((float)_random.NextDouble() - 0.5f) * randomHouseRadius);
-                }
-            }
-
-            return chunk;
-        }
-
-        private void DisableChunk(Transform chunk)
-        {
-            Transform child;
-
-            //make loop at all SPOTs
-            for (int i = 0; i < chunk.childCount; i++)
-            {
-                child = chunk.GetChild(i);
-
-                if (child.name.CompareTo(c_spot) == 0)
-                {
-                    //if we have child object inside SPOT - its a house, disassemble it
-                    if (child.childCount > 0)
-                        BuildingGenerator.Instance.DisableBuilding(child.GetChild(0));
-                }
-            }
-
-            chunk.gameObject.SetActive(false);
-        }
-
         private void OnDestroy()
         {
             if (Instance == this)
                 Instance = null;
         }
-
-        
     }
 }

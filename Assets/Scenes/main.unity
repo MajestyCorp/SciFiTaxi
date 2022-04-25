@@ -539,7 +539,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   trackedObject: {fileID: 1399952356}
-  chunkTemplate: {fileID: 7490679073715178699, guid: d52ea93a5d991804f962a007ba814338,
+  chunkTemplate: {fileID: 3548389790225234844, guid: d52ea93a5d991804f962a007ba814338,
     type: 3}
   chunkWidth: 18
   generationRadius: 3

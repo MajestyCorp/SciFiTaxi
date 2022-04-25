@@ -69,6 +69,7 @@ namespace Scifi.Generators
         {
             Vector3 position;
             position = Random.insideUnitCircle * _cityGen.ChunkWidth * (_cityGen.GenerationRadius - 1f);
+
             //swap Y and Z pos
             position.z = position.y;
             position.y = 0f;
@@ -80,6 +81,7 @@ namespace Scifi.Generators
         {
             Vector3 position;
             position = Random.insideUnitCircle.normalized * _cityGen.ChunkWidth * (_cityGen.GenerationRadius - 1f);
+
             //swap Y and Z pos
             position.z = position.y;
             position.y = 0f;
@@ -91,12 +93,10 @@ namespace Scifi.Generators
             return ClipPos(position);
         }
 
-        /// <summary>
-        /// Set X or Z to "road" position
-        /// </summary>
         private Vector3 ClipPos(Vector3 position)
         {
-            if(Random.value > 0.5f)
+            //Stick X or Z to "road" position
+            if (Random.value > 0.5f)
                 position.x = Mathf.FloorToInt((position.x) / _cityGen.ChunkWidth) * _cityGen.ChunkWidth;
             else
                 position.z = Mathf.FloorToInt((position.z + _cityGen.ChunkWidth) / _cityGen.ChunkWidth) * _cityGen.ChunkWidth;
