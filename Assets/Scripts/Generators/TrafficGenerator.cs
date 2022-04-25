@@ -67,40 +67,40 @@ namespace Scifi.Generators
 
         private Vector3 GetRandomPosition()
         {
-            Vector3 v;
-            v = Random.insideUnitCircle * _cityGen.ChunkWidth * (_cityGen.GenerationRadius - 1f);
+            Vector3 position;
+            position = Random.insideUnitCircle * _cityGen.ChunkWidth * (_cityGen.GenerationRadius - 1f);
             //swap Y and Z pos
-            v.z = v.y;
-            v.y = 0f;
+            position.z = position.y;
+            position.y = 0f;
 
-            return ClipPos(v);
+            return ClipPos(position);
         }
 
         private Vector3 GetRespawnPosition()
         {
-            Vector3 v;
-            v = Random.insideUnitCircle.normalized * _cityGen.ChunkWidth * (_cityGen.GenerationRadius - 1f);
+            Vector3 position;
+            position = Random.insideUnitCircle.normalized * _cityGen.ChunkWidth * (_cityGen.GenerationRadius - 1f);
             //swap Y and Z pos
-            v.z = v.y;
-            v.y = 0f;
+            position.z = position.y;
+            position.y = 0f;
 
             //add player offset
-            v.x += _cityGen.CenterX * _cityGen.ChunkWidth;
-            v.z += _cityGen.CenterY * _cityGen.ChunkWidth;
+            position.x += _cityGen.CenterPosition.x * _cityGen.ChunkWidth;
+            position.z += _cityGen.CenterPosition.y * _cityGen.ChunkWidth;
 
-            return ClipPos(v);
+            return ClipPos(position);
         }
 
         /// <summary>
         /// Set X or Z to "road" position
         /// </summary>
-        private Vector3 ClipPos(Vector3 v)
+        private Vector3 ClipPos(Vector3 position)
         {
             if(Random.value > 0.5f)
-                v.x = Mathf.FloorToInt((v.x) / _cityGen.ChunkWidth) * _cityGen.ChunkWidth;
+                position.x = Mathf.FloorToInt((position.x) / _cityGen.ChunkWidth) * _cityGen.ChunkWidth;
             else
-                v.z = Mathf.FloorToInt((v.z + _cityGen.ChunkWidth) / _cityGen.ChunkWidth) * _cityGen.ChunkWidth;
-            return v;
+                position.z = Mathf.FloorToInt((position.z + _cityGen.ChunkWidth) / _cityGen.ChunkWidth) * _cityGen.ChunkWidth;
+            return position;
         }
 
         private void OnDestroy()

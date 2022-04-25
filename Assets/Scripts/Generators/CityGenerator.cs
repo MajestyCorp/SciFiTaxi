@@ -12,8 +12,7 @@ namespace Scifi.Generators
 
         public float ChunkWidth => chunkWidth;
         public int GenerationRadius => generationRadius;
-        public int CenterX { get; private set; }
-        public int CenterY { get; private set; }
+        public Vector2Int CenterPosition { get; private set; }
 
         [SerializeField]
         private Transform trackedObject;
@@ -38,25 +37,18 @@ namespace Scifi.Generators
 
         public class Chunk
         {
-            public int X { get; private set; }
-            public int Y { get; private set; }
+            public Vector2Int Position { get; private set; }
             public Transform Object { get; private set; }
-            public Chunk(int x, int y, Transform chunk, float chunkWidth)
+            public Chunk(Vector2Int position, Transform chunk, float chunkWidth)
             {
-                X = x;
-                Y = y;
                 Object = chunk;
-                chunk.localPosition = new Vector3(x * chunkWidth, 0f, y * chunkWidth);
+                Position = position;
+                chunk.localPosition = new Vector3(position.x * chunkWidth, 0f, position.y * chunkWidth);
             }
 
-            public int GetSqrDist(int x, int y)
+            public int GetSqrDist(Vector2Int fromPosition)
             {
-                return (X - x) * (X - x) + (Y - y) * (Y - y);
-            }
-
-            public bool IsSameCoords(int x, int y)
-            {
-                return X == x && Y == y;
+                return (Position - fromPosition).sqrMagnitude;
             }
         }
 
@@ -83,17 +75,17 @@ namespace Scifi.Generators
         {
             int sqrRadius = generationRadius * generationRadius;
             int seed;
-            //int cSeed =  Random.Range(int.MinValue, int.MaxValue);
+            Vector2Int coords = Vector2Int.zero;
 
             ClearChunks();
 
-            for(int i=-generationRadius;i<=generationRadius;i++)
-                for(int j=-generationRadius;j<=generationRadius;j++)
+            for(coords.x =-generationRadius; coords.x <=generationRadius;coords.x++)
+                for(coords.y =-generationRadius;coords.y<=generationRadius;coords.y++)
                 {
-                    if(i*i + j*j <= sqrRadius)
+                    if(coords.sqrMagnitude <= sqrRadius)
                     {
-                        seed = (i % 100) * 100 + j % 100;// + cSeed;
-                        _chunks.Add(new Chunk(i, j, CreateChunk(seed), chunkWidth));
+                        seed = (coords.x % 100) * 100 + coords.y % 100;// + cSeed;
+                        _chunks.Add(new Chunk(coords, CreateChunk(seed), chunkWidth));
                     }
                 }
         }
@@ -110,59 +102,58 @@ namespace Scifi.Generators
 
         private void Awake()
         {
-            
             StartCoroutine(Tracker());
         }
 
         public bool ChunkExistAtPos(Vector3 position)
         {
-            int x, y;
-            x = Mathf.FloorToInt((position.x) / chunkWidth);
-            y = Mathf.FloorToInt((position.z + chunkWidth) / chunkWidth);
-
-            return ChunkExist(x, y);
+            Vector2Int coords;
+            coords = Vector2Int.FloorToInt(new Vector2(position.x/chunkWidth, 
+                                                       (position.z +chunkWidth) / chunkWidth));
+            return ChunkExist(coords);
         }
 
         private IEnumerator Tracker()
         {
             float minSize = chunkWidth / 2f;
-            int newX, newY, oldX, oldY;
+            Vector2Int newPos;
 
             //here we will check chunks, generate new and remove old
-            oldX = Mathf.FloorToInt((trackedObject.position.x) / chunkWidth);
-            oldY = Mathf.FloorToInt((trackedObject.position.z + chunkWidth) / chunkWidth);
-
+            CenterPosition = Vector2Int.FloorToInt(new Vector2(trackedObject.position.x / chunkWidth,
+                                                               (trackedObject.position.z + chunkWidth) / chunkWidth));
+            
             while (true)
             {
                 //get player position related to grid position
                 //since block is not well centered (bottom left position is (0;-6)), we need to add chunk width to Z
-                newX = Mathf.FloorToInt((trackedObject.position.x) / chunkWidth);
-                newY = Mathf.FloorToInt((trackedObject.position.z + chunkWidth) / chunkWidth);
+                newPos = Vector2Int.FloorToInt(new Vector2(trackedObject.position.x / chunkWidth,
+                                                           (trackedObject.position.z + chunkWidth) / chunkWidth));
 
-                CenterX = newX;
-                CenterY = newY;
-
-                if(newX != oldX || newY != oldY)
+                if (newPos != CenterPosition)
                 {
-                    yield return StartCoroutine(TrackerUpdate(newX, newY));
+                    yield return StartCoroutine(TrackerUpdate(newPos));
 
-                    oldX = newX;
-                    oldY = newY;
-                } else
+                    CenterPosition = newPos;
+                }
+                else
+                {
                     yield return new WaitForSeconds(0.2f);
+                }
             }
         }
 
-        private IEnumerator TrackerUpdate(int newX, int newY)
+        private IEnumerator TrackerUpdate(Vector2Int newCenter)
         {
             int sqrRadius = generationRadius * generationRadius;
             int seed;
+            Vector2Int coords = Vector2Int.zero;
+            Vector2Int globalCoords;
 
             //check all chunks, add new and remove old
 
             //first, remove old chunks to decrease total list
             for (int i = _chunks.Count - 1; i >= 0; i--)
-                if (_chunks[i].GetSqrDist(newX, newY) > sqrRadius)
+                if (_chunks[i].GetSqrDist(newCenter) > sqrRadius)
                 {
                     DisableChunk(_chunks[i].Object);
                     _chunks.RemoveAt(i);
@@ -172,25 +163,26 @@ namespace Scifi.Generators
                 }
 
             //then add new chunks
-            for (int i = -generationRadius; i <= generationRadius; i++)
-                for (int j = -generationRadius; j <= generationRadius; j++)
+            for (coords.x = -generationRadius; coords.x <= generationRadius; coords.x++)
+                for (coords.y = -generationRadius; coords.y <= generationRadius; coords.y++)
                 {
-                    if (i * i + j * j <= sqrRadius && !ChunkExist(newX + i, newY + j))
+                    globalCoords = newCenter + coords;
+                    if (coords.sqrMagnitude <= sqrRadius && !ChunkExist(globalCoords))
                     {
-                        seed = ((newX + i) % 100) * 100 + (newY + j) % 100;
+                        seed = ((globalCoords.x) % 100) * 100 + (globalCoords.y) % 100;
 
                         //do not create whole chunk at once
                         //instead make small delays between creating each building
                         //so final results wont have lags when big chunk is created
                         //result chunk will be placed in corChunk, because no out params can be used
-                        yield return StartCoroutine(CreateChunkDelayed(newX + i, newY + j, seed));
+                        yield return StartCoroutine(CreateChunkDelayed(globalCoords, seed));
 
-                        _chunks.Add(new Chunk(newX + i, newY + j, _cachedChunk, chunkWidth));
+                        _chunks.Add(new Chunk(globalCoords, _cachedChunk, chunkWidth));
                     } 
                 }
         }
 
-        private IEnumerator CreateChunkDelayed(int x, int y, int seed)
+        private IEnumerator CreateChunkDelayed(Vector2Int globalCoords, int seed)
         {
             Transform child, house;
 
@@ -199,7 +191,7 @@ namespace Scifi.Generators
             _cachedChunk = _chunksPool.GetPooledObject();
             //set chunk position here because we do delayed creation
             //otherwise this chunk will blink and will be visible in wrong position
-            _cachedChunk.localPosition = new Vector3(x * chunkWidth, 0f, y * chunkWidth);
+            _cachedChunk.localPosition = new Vector3(globalCoords.x * chunkWidth, 0f, globalCoords.y * chunkWidth);
             _cachedChunk.gameObject.SetActive(true);
             BuildingGenerator.Instance.SetSeed(seed);
             yield return null;
@@ -219,10 +211,10 @@ namespace Scifi.Generators
             }
         }
 
-        private bool ChunkExist(int x, int y)
+        private bool ChunkExist(Vector2Int coords)
         {
             for (int i = 0; i < _chunks.Count; i++)
-                if (_chunks[i].IsSameCoords(x, y))
+                if (_chunks[i].Position == coords)
                     return true;
             return false;
         }

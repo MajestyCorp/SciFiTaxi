@@ -11,7 +11,7 @@ namespace Scifi.AI
     public class CarAI : MonoBehaviour
     {
         [System.Serializable]
-        public class CarSystem
+        private class CarSystem
         {
             public MovementSO system;
             public float multiplier;

@@ -21,7 +21,6 @@ namespace Scifi.AI
         private CarAI _carAI;
         private Transform _carTransform;
         private Rigidbody _rb;
-        private float _sqrDist;
 
         public override void InitSO(CarAI carAI)
         {
@@ -37,13 +36,11 @@ namespace Scifi.AI
             _carTransform = _carAI.transform;
             _obstaclesArray = null;
             _timer.Activate(Random.value * checkDelay);
-            _sqrDist = avoidRadius * avoidRadius;
         }
 
         public override Vector3 CalcMoveVector()
         {
             //calculate avoidance vector
-
             if(_timer.IsFinished)
             {
                 OverlapCollisions();

@@ -75,27 +75,43 @@ namespace Scifi
 
         private void MovementTick()
         {
-            float turn, angleVelocity = 0f;
-            Vector3 angles;
+            ApplyForces();
+            ApplyTorque();
+            UpdateThrusterDistance();
+            UpdateVerticalDamp();
+        }
 
+        private void ApplyForces()
+        {
             //add forward force
             _rb.AddForce(transform.forward * acceleration * AccelerationForward * _rb.mass);
 
             //add strafe force
             _rb.AddForce(transform.right * acceleration * AccelerationStrafe * _rb.mass);
+        }
 
+        private void UpdateThrusterDistance()
+        {
             //add lift change
             _thrusterDistance += AccelerationLift * Time.fixedDeltaTime;
             _thrusterDistance = Mathf.Max(minThrusterDistance, _thrusterDistance);
+        }
 
+        private void ApplyTorque()
+        {
             //add torque
-            turn = TurnRate;//Input.GetAxis("Horizontal");
-            _rb.AddRelativeTorque(Vector3.up * torque * turn);
+            _rb.AddRelativeTorque(Vector3.up * torque * TurnRate);
+        }
+
+        private void UpdateVerticalDamp()
+        {
+            float angleVelocity = 0f;
+            Vector3 angles;
 
             //add vertical rotation
             angles = transform.eulerAngles;
             //make smooth lerp to max angle
-            angles.z = Mathf.SmoothDampAngle(angles.z, (turn + AccelerationStrafe) * -maxVerticalAngle, ref angleVelocity, rotationSpeed);
+            angles.z = Mathf.SmoothDampAngle(angles.z, (TurnRate + AccelerationStrafe) * -maxVerticalAngle, ref angleVelocity, rotationSpeed);
             transform.eulerAngles = angles;
         }
     }

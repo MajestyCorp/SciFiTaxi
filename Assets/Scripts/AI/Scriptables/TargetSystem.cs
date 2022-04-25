@@ -166,7 +166,9 @@ namespace Scifi.AI
                     return colliders[i].transform;
                 }
                 else if (colliders[i].transform != curTarget && colliders[i].transform != prevTarget)
+                {
                     index--;
+                }
             }
 
             //by default return prev target

@@ -44,22 +44,21 @@ namespace Scifi
             StartCoroutine(AppearCoroutine());
         }
 
-        private void LateUpdate()
-        {
-            if (_countdownTimer.IsActive)
-                UpdateLeelooPosition(_countdownTimer.Progress);
-            else if (leeloo.gameObject.activeSelf)
-                //we are in car - activate effect
-                ActivateHostile();
-        }
-
         IEnumerator AppearCoroutine()
         {
             yield return new WaitForSeconds(Random.Range(minAppearDelay, maxAppearDelay));
 
             _countdownTimer.Activate(fallTime);
-            UpdateLeelooPosition(_countdownTimer.Progress);
             leeloo.gameObject.SetActive(true);
+
+            while(_countdownTimer.IsActive)
+            {
+                UpdateLeelooPosition(_countdownTimer.Progress);
+                yield return null;
+            }
+
+            //timer was finished
+            ActivateHostile();
         }
 
         private void UpdateLeelooPosition(float progress)
