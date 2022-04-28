@@ -8,28 +8,12 @@ namespace Scifi.Generators
     public class BuildingGenerator : MonoBehaviour, IInitializer
     {
         public static BuildingGenerator Instance { get; private set; } = null;
+
+        //every building module has "JOINT" game object - its a point to attach upper floors
         private const string c_joint = "JOINT";
 
-        [Header("Settings"), SerializeField, Min(1)]
-        private int minFloors = 1;
-
-        [SerializeField, Min(1)]
-        private int maxFloors = 3;
-
-        [SerializeField]
-        private List<Transform> bottomItems;
-
-        [SerializeField]
-        private List<Transform> middleItems;
-
-        [SerializeField]
-        private List<Transform> topItems;
-
-        //own stuff
-        //we make pool of each building item
-        //list of all items (bottom + middle + top) for fast pooling
-        private List<Transform> _indexItems = null;
-        private List<Pooler<Transform>> _poolerItems = null;
+        [Header("Settings"), SerializeField]
+        private List<FloorTypes> floorTypes;
 
         private System.Random _random = new System.Random();
 
@@ -41,49 +25,21 @@ namespace Scifi.Generators
         }
 
         public void Initialize()
-        {
-        }
+        { }
 
         private void InitPooling()
         {
-            //we will use indexItems for fast search of needed index in poolerItems
-            _indexItems = new List<Transform>();
-            for (int i = 0; i < bottomItems.Count; i++)
-                _indexItems.Add(bottomItems[i]);
-            for (int i = 0; i < middleItems.Count; i++)
-                _indexItems.Add(middleItems[i]);
-            for (int i = 0; i < topItems.Count; i++)
-                _indexItems.Add(topItems[i]);
-
-            //now init all pooling objects
-            _poolerItems = new List<Pooler<Transform>>();
-            for (int i = 0; i < bottomItems.Count; i++)
-                _poolerItems.Add(new Pooler<Transform>(bottomItems[i]));
-            for (int i = 0; i < middleItems.Count; i++)
-                _poolerItems.Add(new Pooler<Transform>(middleItems[i]));
-            for (int i = 0; i < topItems.Count; i++)
-                _poolerItems.Add(new Pooler<Transform>(topItems[i]));
+            for (int i = 0; i < floorTypes.Count; i++)
+                floorTypes[i].Init();
         }
         #endregion
 
         public void SetSeed(int seed)
         {
             _random = new System.Random(seed);
-        }
 
-        private Transform GetPooledByItem(Transform buildingItem)
-        {
-            int index;
-            index = _indexItems.IndexOf(buildingItem);
-
-            if(index<0)
-            {
-                _indexItems.Add(buildingItem);
-                _poolerItems.Add(new Pooler<Transform>(buildingItem));
-                index = _indexItems.Count - 1;
-            }
-
-            return _poolerItems[index].GetPooledObject();
+            for (int i = 0; i < floorTypes.Count; i++)
+                floorTypes[i].SetRandom(_random);
         }
 
         public void DisableBuilding(Transform item)
@@ -109,62 +65,12 @@ namespace Scifi.Generators
         /// <returns>Building transform</returns>
         public Transform Generate()
         {
-            int floors = _random.Next(minFloors, maxFloors + 1);
-            List<Transform> items;
-            Transform upperFloor = null;
+            Transform lastFloor = null;
 
-            //start generation from the roof
-            //now decide if we have all 3 types of items, or less
-            if(floors>=3)
-            {
-                //we have at least 3 floors, so we can use all 3 types
-                for(int i=1;i<=floors;i++)
-                {
-                    items = i == 1 ? topItems : i == floors ? bottomItems : middleItems;
+            for (int i = 0; i < floorTypes.Count; i++)
+                lastFloor = floorTypes[i].AddFloors(lastFloor);
 
-                    upperFloor = CreateFloor(upperFloor, items);
-                }
-            } else
-            {
-                //we have 1 or 2 floors
-                for (int i = 1; i <= floors; i++)
-                {
-                    items = i == 1 ? topItems : middleItems;
-
-                    upperFloor = CreateFloor(upperFloor, items);
-                }
-            }
-
-            return upperFloor;
-        }
-
-        private Transform CreateFloor(Transform upperFloor, List<Transform> listItems)
-        {
-            //select random prefab from list and get pooled item
-            Transform floor = GetPooledByItem(listItems[_random.Next(0, listItems.Count)]);
-            Transform child;
-
-            //make random rotation 0/90/180/270
-            floor.rotation = Quaternion.Euler(0f, _random.Next(0, 4) * 90f, 0f);
-            floor.gameObject.SetActive(true);
-
-            //if we have upper floor - attach upper floor to this one
-            if(upperFloor !=null)
-            {
-                for (int i = 0; i < floor.childCount; i++)
-                {
-                    child = floor.GetChild(i);
-                    if (child.name.CompareTo(c_joint) == 0)
-                    {
-                        //we found JOINT object, set same position for upperFloor
-                        upperFloor.parent = floor;
-                        upperFloor.localPosition = child.localPosition;
-                        break;
-                    }
-                }
-            }
-
-            return floor;
+            return lastFloor;
         }
 
         private void OnDestroy()
@@ -177,9 +83,108 @@ namespace Scifi.Generators
 
         private void DestroyPool()
         {
-            if (_poolerItems != null)
+            for (int i = 0; i < floorTypes.Count; i++)
+                floorTypes[i].Clear();
+        }
+
+        [System.Serializable]
+        private class FloorTypes
+        {
+            [SerializeField]
+            private string typeName;
+            [SerializeField, Min(0), Tooltip("Minimum number of floors of this type")]
+            private int minFloors = 0;
+            [SerializeField, Min(1), Tooltip("Maximum number of floors of this type")]
+            private int maxFloors;
+
+            [SerializeField]
+            private List<Transform> floorPrefabs;
+
+            //we make pool of each building item
+            //list of all items (bottom + middle + top) for fast pooling
+            private List<Pooler<Transform>> _poolerItems = null;
+
+            private System.Random _random;
+
+            public void Init()
+            {
+                _poolerItems = new List<Pooler<Transform>>();
+
+                for (int i = 0; i < floorPrefabs.Count; i++)
+                    _poolerItems.Add(new Pooler<Transform>(floorPrefabs[i], 1));
+            }
+
+            public void SetRandom(System.Random random)
+            {
+                _random = random;
+            }
+
+            public Transform AddFloors(Transform upperFloor)
+            {
+                Transform lastFloor = upperFloor;
+                int floors = _random.Next(minFloors, maxFloors + 1);
+
+                for (int i = 0; i < floors; i++)
+                    lastFloor = AddFloorAtBottom(lastFloor);
+
+                return lastFloor;
+            }
+
+            public void Clear()
+            {
                 for (int i = 0; i < _poolerItems.Count; i++)
                     _poolerItems[i].Clear();
+            }
+
+            private Transform AddFloorAtBottom(Transform upperFloor)
+            {
+                Transform result;
+                Transform floor;
+                Transform joint;
+
+                result = upperFloor;
+
+                //select random prefab from list and get pooled item
+                floor = GetPooledByItem(floorPrefabs[_random.Next(0, floorPrefabs.Count)]);
+
+                //make random rotation 0/90/180/270
+                floor.rotation = Quaternion.Euler(0f, _random.Next(0, 4) * 90f, 0f);
+                floor.gameObject.SetActive(true);
+
+                //if we have upper floor - attach upper floor to this one
+                if (upperFloor != null && HasJoint(floor, out joint))
+                {
+                    upperFloor.parent = floor;
+                    upperFloor.localPosition = joint.localPosition;
+                }
+
+                return floor;
+            }
+
+            private bool HasJoint(Transform floor, out Transform joint)
+            {
+                Transform child;
+                joint = null;
+
+                for (int i = 0; i < floor.childCount; i++)
+                {
+                    child = floor.GetChild(i);
+                    if (child.name.CompareTo(c_joint) == 0)
+                    {
+                        joint = child;
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            private Transform GetPooledByItem(Transform floorPrefab)
+            {
+                int index;
+                index = floorPrefabs.IndexOf(floorPrefab);
+                return _poolerItems[index].GetPooledObject();
+            }
         }
     }
 }

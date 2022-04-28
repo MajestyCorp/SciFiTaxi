@@ -543,7 +543,6 @@ MonoBehaviour:
     type: 3}
   chunkWidth: 18
   generationRadius: 3
-  randomHouseRadius: 0.15
 --- !u!1 &1076175981
 GameObject:
   m_ObjectHideFlags: 0
@@ -573,7 +572,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edc12a33518dd554a873a4ef557005ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  minFloors: 1
+  floorTypes:
+  - typeName: roof
+    minFloors: 1
+    maxFloors: 1
+    floorPrefabs:
+    - {fileID: 7234442755724425920, guid: ffb1c52e16e0a8a4cbf56d5b123050db, type: 3}
+    - {fileID: 4293185389540924675, guid: 56ef90a4ad7421d439c2a65713e5785b, type: 3}
+    - {fileID: 5721774064106963901, guid: 983e06fd4a390f24e89c5e5202d1450e, type: 3}
+    - {fileID: 142299213394959131, guid: 85996cf61f27fc44791063d79d0bcb2f, type: 3}
+    - {fileID: 7990766192124603459, guid: 57e857c535469b04396eab6f13e81eff, type: 3}
+  - typeName: mid floors
+    minFloors: 0
+    maxFloors: 2
+    floorPrefabs:
+    - {fileID: 3044553586422895437, guid: 4a652d846bfcb414b85db134dedbdb40, type: 3}
+    - {fileID: 1867332533096889419, guid: e636aca57b78d7b4cb554b70ca4c905a, type: 3}
+    - {fileID: 3234614472269344967, guid: 5bd08799bac81c3468f5e578dc3533af, type: 3}
+    - {fileID: 3803583816986447563, guid: f6e10fc7b46e76441890c55ea721925c, type: 3}
+    - {fileID: 2135267295039773848, guid: 42009df308f3b1b43992909e6cb15a8a, type: 3}
+  - typeName: ground floor
+    minFloors: 1
+    maxFloors: 1
+    floorPrefabs:
+    - {fileID: 5865092488579540429, guid: de06d23c9c979984cb5cdb98ec2cb6cf, type: 3}
+    - {fileID: 732061060551943729, guid: f478cb65a99f0764784f0ccfd908aacf, type: 3}
+    - {fileID: 9110193113811809419, guid: 96a359758870f16468edb2166e20855d, type: 3}
+    - {fileID: 8198284053904294657, guid: 96dc35faca2a66b418205bf465595708, type: 3}
+    - {fileID: 7825682995322133040, guid: 2b36e4d1839920c4aa6e71a3bb3e903a, type: 3}
   maxFloors: 3
   bottomItems:
   - {fileID: 5865092488579540429, guid: de06d23c9c979984cb5cdb98ec2cb6cf, type: 3}
