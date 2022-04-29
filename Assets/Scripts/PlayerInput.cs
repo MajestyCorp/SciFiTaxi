@@ -38,31 +38,12 @@ namespace Scifi
 
         //new input system stuff
         private InputActions _inputActions;
-        private Vector2 _movement, _look, _angles;
+        private Vector2 _movement, _look, _cameraAngles;
         private float _lift;
 
         private void Awake()
         {
             _inputActions = new InputActions();
-
-            _inputActions.carControl.Movement.performed += OnMovement;
-            _inputActions.carControl.Look.performed += OnLook;
-            _inputActions.carControl.Lift.performed += OnLift;
-        }
-
-        private void OnLift(InputAction.CallbackContext context)
-        {
-            _lift = context.ReadValue<float>();
-        }
-
-        private void OnLook(InputAction.CallbackContext context)
-        {
-            _look = context.ReadValue<Vector2>();
-        }
-
-        private void OnMovement(InputAction.CallbackContext context)
-        {
-            _movement = context.ReadValue<Vector2>();
         }
 
         private void OnEnable()
@@ -75,8 +56,8 @@ namespace Scifi
             //initialize start angles
             Vector3 angles;
             angles = carCamera.eulerAngles;
-            _angles.x = angles.x;
-            _angles.y = angles.y;
+            _cameraAngles.x = angles.x;
+            _cameraAngles.y = angles.y;
             _desiredRotation = carCamera.rotation;
 
             _car = carTarget.transform;
@@ -92,20 +73,19 @@ namespace Scifi
 
         private void ControlCar()
         {
-            Vector3 angles;
             Vector3 vCamera, vCar;
 
             //how to calc Car.TurnRate
             //calculate signed angle between two "forward" vectors from top down view
             //forward camera vector and forward car vector
-            angles = carCamera.eulerAngles;
-            vCamera = Quaternion.Euler(0f, angles.y, 0f) * Vector3.forward;
-
-            angles = _car.eulerAngles;
-            vCar = Quaternion.Euler(0f, angles.y, 0f) * Vector3.forward;
-
+            vCamera = Quaternion.Euler(0f, carCamera.eulerAngles.y, 0f) * Vector3.forward;
+            vCar = Quaternion.Euler(0f, _car.eulerAngles.y, 0f) * Vector3.forward;
             carTarget.TurnRate = Vector3.SignedAngle(vCar, vCamera, Vector3.up) * turnStrength;
 
+            //read input values
+            _movement = _inputActions.carControl.Movement.ReadValue<Vector2>();
+            _lift = _inputActions.carControl.Lift.ReadValue<float>();
+            
             //apply acceleration
             carTarget.AccelerationForward = _movement.y * accelerationStrength;
             carTarget.AccelerationStrafe = _movement.x * accelerationStrength;
@@ -115,9 +95,11 @@ namespace Scifi
 
         private void HandleRotation()
         {
-            _angles += _look * sensitivity * Time.deltaTime;
-            _angles.y = Mathf.Clamp(_angles.y, -80f, 80f);
-            _desiredRotation = Quaternion.Euler(-_angles.y, _angles.x, 0);
+            _look = _inputActions.carControl.Look.ReadValue<Vector2>();
+
+            _cameraAngles += _look * sensitivity * Time.deltaTime;
+            _cameraAngles.y = Mathf.Clamp(_cameraAngles.y, -80f, 80f);
+            _desiredRotation = Quaternion.Euler(-_cameraAngles.y, _cameraAngles.x, 0);
         }
 
         private void MoveToDesiredPos()
@@ -132,13 +114,6 @@ namespace Scifi
         private void OnDisable()
         {
             _inputActions.carControl.Disable();
-        }
-
-        private void OnDestroy()
-        {
-            _inputActions.carControl.Movement.performed -= OnMovement;
-            _inputActions.carControl.Look.performed -= OnLook;
-            _inputActions.carControl.Lift.performed -= OnLift;
         }
     }
 }

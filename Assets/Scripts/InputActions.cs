@@ -38,9 +38,9 @@ namespace Scifi.Input
                 },
                 {
                     ""name"": ""Lift"",
-                    ""type"": ""PassThrough"",
+                    ""type"": ""Button"",
                     ""id"": ""8d572be5-4ba0-4c6f-ad22-2e0de4018264"",
-                    ""expectedControlType"": ""Axis"",
+                    ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """"
                 }

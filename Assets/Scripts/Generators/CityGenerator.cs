@@ -32,13 +32,13 @@ namespace Scifi.Generators
         private List<Chunk> _chunks = new List<Chunk>();
 
         #region initialize stuff
-        public void InitInstance()
+        void IInitializer.InitInstance()
         {
             Instance = this;
             InitPooling();
         }
 
-        public void Initialize()
+        void IInitializer.Initialize()
         {
             InitCity();
         }

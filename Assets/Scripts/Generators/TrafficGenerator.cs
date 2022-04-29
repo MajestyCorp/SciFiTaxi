@@ -17,7 +17,7 @@ namespace Scifi.Generators
 
 
         #region initializer
-        public void InitInstance()
+        void IInitializer.InitInstance()
         {
             Instance = this;
             InitCarPools();
@@ -28,7 +28,7 @@ namespace Scifi.Generators
         /// so we can get params from CityGenerator
         /// and place all cars on map
         /// </summary>
-        public void Initialize()
+        void IInitializer.Initialize()
         {
             _cityGen = CityGenerator.Instance;
 

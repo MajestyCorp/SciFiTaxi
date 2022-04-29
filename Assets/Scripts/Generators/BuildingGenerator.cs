@@ -18,13 +18,13 @@ namespace Scifi.Generators
         private System.Random _random = new System.Random();
 
         #region initialize stuff
-        public void InitInstance()
+        void IInitializer.InitInstance()
         {
             Instance = this;
             InitPooling();
         }
 
-        public void Initialize()
+        void IInitializer.Initialize()
         { }
 
         private void InitPooling()
